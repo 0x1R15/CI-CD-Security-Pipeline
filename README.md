@@ -1,4 +1,5 @@
-# Cloud Security CI/CD & DevSecOps Sandbox 🔒🚀
+
+# Cloud Security CI/CD & DevSecOps Sandbox
 
 Welcome to the **Cloud Security CI/CD & DevSecOps Sandbox**! This interactive project is designed to demonstrate modern DevSecOps practices, pipeline security gates, and AWS secure deployment patterns. 
 
@@ -6,7 +7,7 @@ It provides a hands-on learning environment where you can deliberately inject se
 
 ---
 
-## 🏗️ Project Architecture Overview
+## Project Architecture Overview
 
 The sandbox comprises a Flask web application, a local pipeline simulator, IaC configurations, and an interactive CLI management dashboard.
 
@@ -30,7 +31,7 @@ cloud-security-cicd/
 
 ---
 
-## 🛡️ DevSecOps Pipeline Security Gates
+## DevSecOps Pipeline Security Gates
 
 The CI/CD pipeline (both local simulator and GitHub Actions) enforces five key security gates:
 
@@ -44,7 +45,7 @@ The CI/CD pipeline (both local simulator and GitHub Actions) enforces five key s
 
 ---
 
-## 🖥️ Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -66,7 +67,7 @@ The CI/CD pipeline (both local simulator and GitHub Actions) enforces five key s
 
 ---
 
-## 🛠️ Step-by-Step Walkthrough
+## Step-by-Step Walkthrough
 
 Follow this workflow in the dashboard to see the DevSecOps lifecycle in action:
 
@@ -101,7 +102,7 @@ Select **Option 1** again.
 
 ---
 
-## ☁️ Secure AWS Cloud Blueprint Highlights
+## Secure AWS Cloud Blueprint Highlights
 
 Selecting **Option 4** in the dashboard renders the secure AWS deployment blueprint:
 
