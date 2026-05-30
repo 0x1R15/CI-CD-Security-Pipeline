@@ -1,0 +1,28 @@
+# Virtual environment
+.venv_pipeline/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest cache
+.pytest_cache/
+
+# Local database
+*.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform.lock.hcl
+
+# IDEs/System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

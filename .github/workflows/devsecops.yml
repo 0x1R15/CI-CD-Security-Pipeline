@@ -1,0 +1,142 @@
+name: DevSecOps Secure CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  id-token: write  # Required for requesting the AWS JWT (OIDC)
+  contents: read   # Required for actions/checkout
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt
+
+      - name: Run Unit Tests
+        run: |
+          PYTHONPATH=. pytest app/tests/
+
+  security-scans:
+    name: Security Auditing
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for Gitleaks git history scan
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Security Scanners
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit pip-audit
+
+      # 1. SAST (Static Application Security Testing)
+      - name: Run Bandit (SAST)
+        run: |
+          bandit -r app/ -ll -v
+
+      # 2. SCA (Software Composition Analysis)
+      - name: Run Pip-Audit (SCA)
+        run: |
+          pip-audit -r app/requirements.txt
+
+      # 3. Secret Detection
+      - name: Run Gitleaks (Secret Detection)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: false # Stop pipeline if secrets are found
+
+      # 4. Infrastructure as Code (IaC) Scan
+      - name: Run Trivy IaC Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          hide-progress: true
+          exit-code: '1' # Fail the build if issues are found
+          ignore-unfixed: true
+          severity: 'HIGH,CRITICAL'
+          scan-ref: 'terraform/'
+
+  deploy:
+    name: Secure Cloud Deployment
+    needs: security-scans
+    runs-on: ubuntu-latest
+    # Deploy only on pushes to main (not pull requests)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Connect to AWS using OIDC Trust Relationship (No static keys in secrets!)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      # Deploy code using AWS Systems Manager Run Command (No port 22 open)
+      - name: Deploy to EC2 via SSM Run Command
+        run: |
+          INSTANCE_ID=${{ secrets.EC2_INSTANCE_ID }}
+          
+          # Send deployment shell script to target instance
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "cd /home/webapp/app",
+              "git fetch origin main",
+              "git reset --hard origin/main",
+              "source venv/bin/activate",
+              "pip install -r requirements.txt",
+              "chown -R webapp:webapp /home/webapp",
+              "systemctl restart gunicorn || (gunicorn -w 4 -b 0.0.0.0:5000 app:app --daemon --pid /tmp/gunicorn.pid || pkill -F /tmp/gunicorn.pid && gunicorn -w 4 -b 0.0.0.0:5000 app:app --daemon --pid /tmp/gunicorn.pid)"
+            ]' \
+            --query "Command.CommandId" \
+            --output text)
+            
+          echo "Deployment triggered. Command ID: $COMMAND_ID"
+          
+          # Wait for execution and check status
+          STATUS="Pending"
+          while [ "$STATUS" == "Pending" ] || [ "$STATUS" == "InProgress" ]; do
+            sleep 5
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query "Status" \
+              --output text)
+            echo "Deployment status: $STATUS"
+          done
+          
+          if [ "$STATUS" != "Success" ]; then
+            echo "SSM Deployment failed with status $STATUS"
+            aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"
+            exit 1
+          fi
+          echo "Secure Deployment Completed Successfully!"

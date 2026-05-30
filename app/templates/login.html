@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure CI/CD App - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: rgba(22, 27, 34, 0.85);
+            --border-color: #30363d;
+            --primary-accent: #2ea44f;
+            --primary-hover: #2c974b;
+            --text-color: #e6edf3;
+            --muted-text: #8b949e;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 10% 20%, rgba(33, 39, 48, 0.4) 0%, rgba(13, 17, 23, 1) 90%);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Decorative background glow */
+        .glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(46, 164, 79, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+            top: -50px;
+            right: -50px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            padding: 40px;
+            z-index: 10;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .login-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(46, 164, 79, 0.1);
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .brand-logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3fb950 0%, #2ea44f 100%);
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(46, 164, 79, 0.3);
+        }
+
+        .brand-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-subtitle {
+            font-size: 14px;
+            color: var(--muted-text);
+        }
+
+        .form-label {
+            font-weight: 500;
+            font-size: 14px;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            background-color: #010409 !important;
+            border: 1px solid var(--border-color);
+            color: var(--text-color) !important;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(46, 164, 79, 0.2);
+            outline: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-accent);
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 15px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .alert {
+            font-size: 14px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.2);
+            color: #ff7b72;
+        }
+
+        .demo-credentials {
+            margin-top: 25px;
+            padding: 12px;
+            background-color: rgba(56, 139, 253, 0.1);
+            border: 1px solid rgba(56, 139, 253, 0.2);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .demo-credentials code {
+            color: #58a6ff;
+            background: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="glow"></div>
+    <div class="login-card">
+        <div class="brand-header">
+            <div class="brand-logo">🔒</div>
+            <h1 class="brand-title">Secure CI/CD Demo</h1>
+            <p class="brand-subtitle">Enterprise DevSecOps Pipeline Sandbox</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} text-center" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="/login" method="POST">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" id="username" name="username" class="form-control" autocomplete="off" required>
+            </div>
+            
+            <div class="mb-4">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Authenticate</button>
+        </form>
+
+        <div class="demo-credentials text-center">
+            <span class="text-white d-block mb-1">🔑 Demo Credentials</span>
+            <span class="text-secondary">Username: <code>admin</code></span>
+            <span class="text-secondary ms-2">|</span>
+            <span class="text-secondary ms-2">Password: <code>SuperSecurePassword123!</code></span>
+        </div>
+    </div>
+</body>
+</html>
